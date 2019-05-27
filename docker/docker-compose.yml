@@ -1,0 +1,36 @@
+version: "3.2"
+
+volumes:
+  gi-visualizer-postgres-data:
+    external: true
+  gi-visualizer-uploads:
+    external: true
+
+services:
+  db:
+    image: postgres:9.6
+    environment:
+      - "POSTGRES_USER=postgres"
+      - "POSTGRES_PASSWORD=password"
+      - "DB_SCHEMA=visualizer"
+    volumes:
+      - gi-visualizer-postgres-data:/var/lib/postgresql/data
+      - ./create_pg_schema.sh:/docker-entrypoint-initdb.d/001_create_schema.sh
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+  app:
+    image: "gi-visualizer:latest"
+    environment:
+      - "DB_SCHEMA=visualizer"
+      - "DB_HOST=db"
+      - "DB_PORT=5432"
+      - "DB_USER=postgres"
+      - "DB_PASS=password"
+    volumes:
+      - gi-visualizer-uploads:/opt/gi-visualizer/uploads
+    ports:
+      - "3001:3000"
+    deploy:
+      placement:
+        constraints: [node.role == manager]
